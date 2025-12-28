@@ -76,101 +76,124 @@ export default function HistoryPage() {
 
   return (
     <Protected>
-      <div className="space-y-5">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="space-y-1">
-            <p className="text-sm font-semibold uppercase tracking-[0.08em] text-slate-500">
-              Logs
-            </p>
-            <div>
-              <h1 className="text-2xl font-semibold text-slate-900">History</h1>
-              <p className="text-sm text-slate-600">Recent analyses</p>
+      <div className="min-h-screen bg-slate-50/30 pb-8">
+        <div className="mx-auto max-w-7xl px-4 pt-8 sm:px-6 lg:px-8">
+          <div className="space-y-6">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="space-y-1">
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  Logs
+                </p>
+                <div>
+                  <h1 className="text-3xl font-bold text-slate-900">History</h1>
+                  <p className="mt-1 text-sm text-slate-600">Recent analyses</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => handleDownload('csv')}
+                  disabled={exporting !== null}
+                  loading={exporting === 'csv'}
+                >
+                  {exporting === 'csv' ? 'Exporting...' : 'Export CSV'}
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => handleDownload('pdf')}
+                  disabled={exporting !== null}
+                  loading={exporting === 'pdf'}
+                >
+                  {exporting === 'pdf' ? 'Exporting...' : 'Export PDF'}
+                </Button>
+              </div>
+            </div>
+
+            {error && <ProblemAlert message={error} />}
+
+            <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHead>
+                    <TableRow className="bg-slate-50">
+                      <TableHeaderCell className="w-48 whitespace-nowrap">
+                        Created
+                      </TableHeaderCell>
+                      <TableHeaderCell className="w-28 whitespace-nowrap">
+                        Label
+                      </TableHeaderCell>
+                      <TableHeaderCell className="w-28 whitespace-nowrap text-right">
+                        Prob AI
+                      </TableHeaderCell>
+                      <TableHeaderCell className="min-w-[300px]">
+                        Preview
+                      </TableHeaderCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {loading ? (
+                      <TableRow>
+                        <TableCell colSpan={4} className="py-12 text-center text-sm text-slate-500">
+                          Loading...
+                        </TableCell>
+                      </TableRow>
+                    ) : analyses.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={4} className="py-12 text-center text-sm text-slate-500">
+                          No analyses yet.
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      analyses.map((item) => (
+                        <TableRow
+                          key={item.id}
+                          className="border-t border-slate-100 transition-colors hover:bg-slate-50/50"
+                        >
+                          <TableCell className="whitespace-nowrap text-sm text-slate-700">
+                            {new Date(item.created_at).toLocaleString('en-US', {
+                              month: '2-digit',
+                              day: '2-digit',
+                              year: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                              hour12: true,
+                            })}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={item.label_pred === 1 ? 'ai' : 'human'}>
+                              {formatLabel(item.label_pred)}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right text-sm tabular-nums text-slate-800">
+                            {item.prob_ai.toFixed(3)}
+                          </TableCell>
+                          <TableCell>
+                            <Link
+                              href={`/history/${item.id}`}
+                              className="group inline-flex items-center gap-2"
+                            >
+                              <span className="block max-w-md truncate text-sm text-slate-600 group-hover:text-slate-900">
+                                {item.preview || 'No preview available'}
+                              </span>
+                              <span className="whitespace-nowrap text-xs font-semibold text-blue-600 opacity-0 transition-opacity group-hover:opacity-100">
+                                View →
+                              </span>
+                            </Link>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => handleDownload('csv')}
-              disabled={exporting === 'csv'}
-              loading={exporting === 'csv'}
-            >
-              {exporting === 'csv' ? 'Exporting...' : 'Export CSV'}
-            </Button>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => handleDownload('pdf')}
-              disabled={exporting === 'pdf'}
-              loading={exporting === 'pdf'}
-            >
-              {exporting === 'pdf' ? 'Exporting...' : 'Export PDF'}
-            </Button>
-          </div>
         </div>
-
-        <ProblemAlert message={error} />
-
-        <TableContainer>
-          <Table>
-            <TableHead className="sticky top-[64px] z-10 border-b border-slate-200">
-              <TableRow className="hover:bg-transparent">
-                <TableHeaderCell className="w-40">Created</TableHeaderCell>
-                <TableHeaderCell className="w-24">Label</TableHeaderCell>
-                <TableHeaderCell className="w-24 text-right">Prob AI</TableHeaderCell>
-                <TableHeaderCell>Preview</TableHeaderCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {loading ? (
-                <TableRow>
-                  <TableCell colSpan={4} className="text-sm text-slate-600">
-                    Loading...
-                  </TableCell>
-                </TableRow>
-              ) : analyses.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={4} className="text-sm text-slate-600">
-                    No analyses yet.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                analyses.map((item, idx) => (
-                  <TableRow
-                    key={item.id}
-                    className={idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/60'}
-                  >
-                    <TableCell className="text-slate-700">
-                      {new Date(item.created_at).toLocaleString()}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={item.label_pred === 1 ? 'ai' : 'human'}>
-                        {formatLabel(item.label_pred)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums text-slate-800">
-                      {item.prob_ai.toFixed(3)}
-                    </TableCell>
-                    <TableCell className="text-slate-700">
-                      <Link
-                        href={`/history/${item.id}`}
-                        className="group inline-flex max-w-full items-center gap-2"
-                      >
-                        <span className="block max-w-[320px] truncate text-slate-600">
-                          {item.preview}
-                        </span>
-                        <span className="text-sm font-semibold text-[var(--accent)] opacity-0 transition group-hover:opacity-100">
-                          View
-                        </span>
-                      </Link>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
       </div>
     </Protected>
   );
 }
+
+
